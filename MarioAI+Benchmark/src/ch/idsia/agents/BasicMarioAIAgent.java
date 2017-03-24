@@ -23,7 +23,7 @@ protected byte[][] mergedObservation;
 protected float[] marioFloatPos = null;
 protected float[] enemiesFloatPos = null;
 
-int[] marioCenter = null;
+protected int[] marioCenter = null;
 
 protected int[] marioState = null;
 

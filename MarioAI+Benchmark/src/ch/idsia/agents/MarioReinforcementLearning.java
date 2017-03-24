@@ -157,48 +157,8 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 		{
 		case 0: 	// little baby boy
 			
-			// -1,-1
-			if(getEnemyFieldCellValue(-1,-1) != 0)
-			{
-				msg += "1";
-			}
-			else
-			{
-				msg += "0";
-			}
-			
-			// 0,-1
-			if(getEnemyFieldCellValue(0,-1) != 0)
-			{
-				msg += "1";
-			}
-			else
-			{
-				msg += "0";
-			}
-			
-			// 1,-1
-			if(getEnemyFieldCellValue(1,-1) != 0)
-			{
-				msg += "1";
-			}
-			else
-			{
-				msg += "0";
-			}
-			
-			// 1,0
-			if(getEnemyFieldCellValue(1,0) != 0)
-			{
-				msg += "1";
-			}
-			else
-			{
-				msg += "0";
-			}
-			
-			// 1,1
-			if(getEnemyFieldCellValue(1,1) != 0)
+			// -1,1
+			if(getEnemyFieldCellValue(-1,1) != 0)
 			{
 				msg += "1";
 			}
@@ -217,8 +177,48 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 				msg += "0";
 			}
 			
-			// -1,1
-			if(getEnemyFieldCellValue(-1,1) != 0)
+			// 1,1
+			if(getEnemyFieldCellValue(1,1) != 0)
+			{
+				msg += "1";
+			}
+			else
+			{
+				msg += "0";
+			}
+			
+			// 1,0
+			if(getEnemyFieldCellValue(1,0) != 0)
+			{
+				msg += "1";
+			}
+			else
+			{
+				msg += "0";
+			}
+			
+			// 1,-1
+			if(getEnemyFieldCellValue(1,-1) != 0)
+			{
+				msg += "1";
+			}
+			else
+			{
+				msg += "0";
+			}
+			
+			// 0,-1
+			if(getEnemyFieldCellValue(0,-1) != 0)
+			{
+				msg += "1";
+			}
+			else
+			{
+				msg += "0";
+			}
+			
+			// -1,-1
+			if(getEnemyFieldCellValue(-1,-1) != 0)
 			{
 				msg += "1";
 			}
@@ -242,8 +242,8 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 		default: 	// "meat on them bones" Mario
 			
 			
-			// -1,-1
-			if(getEnemyFieldCellValue(-1,-2) != 0)
+			// -1,2
+			if(getEnemyFieldCellValue(-1,2) != 0)
 			{
 				msg += "1";
 			}
@@ -252,8 +252,8 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 				msg += "0";
 			}
 			
-			// 0,-1
-			if(getEnemyFieldCellValue(0,-2) != 0)
+			// 0,2
+			if(getEnemyFieldCellValue(0,2) != 0)
 			{
 				msg += "1";
 			}
@@ -262,8 +262,8 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 				msg += "0";
 			}
 			
-			// 1,-1
-			if(getEnemyFieldCellValue(1,-2) != 0)
+			// 1,2
+			if(getEnemyFieldCellValue(1,2) != 0)
 			{
 				msg += "1";
 			}
@@ -274,7 +274,7 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 			
 			// 1,0
 			//check two cells instead of one
-			if(getEnemyFieldCellValue(1,-1) != 0 || getEnemyFieldCellValue(1, -0)!=0)
+			if(getEnemyFieldCellValue(1,1) != 0 || getEnemyFieldCellValue(1, 0)!=0)
 			{
 				msg += "1";
 			}
@@ -283,8 +283,8 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 				msg += "0";
 			}
 			
-			// 1,1
-			if(getEnemyFieldCellValue(1,1) != 0)
+			// 1,-1
+			if(getEnemyFieldCellValue(1,-1) != 0)
 			{
 				msg += "1";
 			}
@@ -293,8 +293,8 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 				msg += "0";
 			}
 			
-			// 0,1
-			if(getEnemyFieldCellValue(0,1) != 0)
+			// 0,-1
+			if(getEnemyFieldCellValue(0,-1) != 0)
 			{
 				msg += "1";
 			}
@@ -303,8 +303,8 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 				msg += "0";
 			}
 			
-			// -1,1
-			if(getEnemyFieldCellValue(-1,1) != 0)
+			// -1,-1
+			if(getEnemyFieldCellValue(-1,-1) != 0)
 			{
 				msg += "1";
 			}
@@ -315,7 +315,7 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 			
 			// -1,0
 			//check two cells instead of just one
-			if(getEnemyFieldCellValue(-1,0) != 0 || getEnemyFieldCellValue(-1, -1)!=0)
+			if(getEnemyFieldCellValue(-1,0) != 0 || getEnemyFieldCellValue(-1, 1)!=0)
 			{
 				msg += "1";
 			}
