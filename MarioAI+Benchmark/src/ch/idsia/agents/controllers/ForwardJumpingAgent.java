@@ -23,9 +23,13 @@ public class ForwardJumpingAgent extends BasicMarioAIAgent implements Agent
 
     public boolean[] getAction()
     {
-    	if(getEnemyFieldCellValue(0,-1) != 0 || getEnemyFieldCellValue(0,-2) != 0 || getEnemyFieldCellValue(0,-3) != 0 )
+    	if((getEnemyFieldCellValue(0,-2) != 0 && getEnemyFieldCellValue(0,-2) != 25) || 
+    			(getEnemyFieldCellValue(0,-3) != 0 && getEnemyFieldCellValue(0,-3) != 25) ||
+    			(getEnemyFieldCellValue(0,-4) != 0 && getEnemyFieldCellValue(0,-4) != 25))
     	{
-    		System.out.println("There is an enemy.");
+    		
+    		System.out.printf("There is an enemy. Mario (x,y) = (%d,%d) - {%d} | {%d} | {%d}\n",marioCenter[0],marioCenter[1],getEnemyFieldCellValue(0,-2),getEnemyFieldCellValue(0,-3),getEnemyFieldCellValue(0,-4));
+    		//System.out.printf("Mario Center => (%d,%d)", marioCenter[0], marioCenter[1]);
     	}
         action[Mario.KEY_SPEED] = action[Mario.KEY_JUMP] = isMarioAbleToJump || !isMarioOnGround;
         return action;
@@ -40,8 +44,8 @@ public class ForwardJumpingAgent extends BasicMarioAIAgent implements Agent
     
     public int getEnemyFieldCellValue(int x, int y)
     {
-    	x+=11;	// account for Mario being in the middle of the screen
-    	y+=11;	// account for Mario being in the middle of the screen
+    	x+= marioCenter[0]+2;	// account for Mario being in the middle of the screen
+    	y+= marioCenter[1]+2;//y+= marioCenter[1]+1;	// account for Mario being in the middle of the screen
     	
         if (x < 0 || x >= enemies.length || y < 0 || y >= enemies[0].length)
             return 0;
