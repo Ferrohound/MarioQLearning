@@ -1,6 +1,7 @@
 package ch.idsia.agents.controllers;
 
 import ch.idsia.agents.Agent;
+import ch.idsia.agents.BasicMarioAIAgent;
 
 /**
  * Created by IntelliJ IDEA.

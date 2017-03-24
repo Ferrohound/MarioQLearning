@@ -1,6 +1,5 @@
-package ch.idsia.agents.controllers;
+package ch.idsia.agents;
 
-import ch.idsia.agents.Agent;
 import ch.idsia.benchmark.mario.environments.Environment;
 
 /**
@@ -115,6 +114,17 @@ public int getReceptiveFieldCellValue(int x, int y)
         return 0;
 
     return levelScene[x][y];
+}
+
+public int getEnemyFieldCellValue(int x, int y)
+{
+	x+=11;	// account for Mario being in the middle of the screen
+	y+=11;	// account for Mario being in the middle of the screen
+	
+    if (x < 0 || x >= enemies.length || y < 0 || y >= enemies[0].length)
+        return 0;
+
+    return enemies[x][y];
 }
 
 //    public void integrateObservation(int[] serializedLevelSceneObservationZ, int[] serializedEnemiesObservationZ, float[] marioFloatPos, float[] enemiesFloatPos, int[] marioState)
