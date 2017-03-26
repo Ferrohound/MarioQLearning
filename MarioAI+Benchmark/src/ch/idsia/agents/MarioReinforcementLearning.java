@@ -1,5 +1,7 @@
 package ch.idsia.agents;
 import java.util.Hashtable;
+import java.util.Iterator;
+import java.util.Map;
 
 import ch.idsia.agents.Agent;
 import ch.idsia.agents.BasicMarioAIAgent;
@@ -23,7 +25,8 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 	//input a string, get a hashtable of all the possible actions from that string
 	//and their respective Q values
 	//bool[] instead of string?
-	Hashtable<String, Hashtable<String, Integer>> Q;
+	Hashtable<String, Hashtable<String, Double>> Q;
+	Hashtable<String, Double> R;
 	
 	
 	
@@ -32,11 +35,12 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 		super(name);
 
 		previous_pos = marioFloatPos;
-		Q = new Hashtable<String, Hashtable<String, Integer>>();
+		Q = new Hashtable<String, Hashtable<String, Double>>();
+		R = new Hashtable<String, Double>();
 		
 	}
 	
-	
+	//============================================================================"GET" FUNCTIONS===========================================
 	public boolean[] getAction()
 	{
 		if(testing_state_1)
@@ -85,28 +89,35 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 		String currentState = getState();
 		
 		//get the list of actions from that state
-		Hashtable<String, Integer> options = Q.get(currentState);
+		Hashtable<String, Double> options = Q.get(currentState);
 		
 		//get the list of actions
 		String[] actions = getActionsFromState(currentState);
 		
-		//iterate over all of the actions and check their Q values, set nextState to
+		//iterate over all of the actions and check their rewards, set nextState to
 		//the highest of all of them
 		int j = 0;
-		float maxQ = 0;
+		double reward = 0;
 		for(int i=0; i<actions.length;i++)
 		{
-			if(options.get(actions[i])>maxQ)
+			//find the state with the highest reward
+			if(R.get(actions[i])>reward)
 			{
 				j = i;
-				maxQ = options.get(actions[i]);
+				reward = R.get(actions[i]);
 			}
 		}
 		
 		String nextState = actions[j];
 		
-		act = encodeAction(currentState, nextState);
 		//encode the best action from options and store it in act
+		act = encodeAction(nextState);
+		
+		//============================================================================UPDATE QTable=========================
+		options = Q.get(currentState);
+		double newQ = options.get(actions[j]);
+		newQ += alpha * (R.get(currentState) + (gamma * getMaxQ(currentState)) - newQ);
+		options.put(currentState, newQ);
 		
 		return act;
 	}
@@ -114,7 +125,7 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 	//get all of the actions possible from the current state
 	public String[] getActionsFromState(String state)
 	{
-		String[] actions = new String[100];
+		String[] actions = new String[20];
 		//5 actions for movement
 		//to jump or not to jump
 		//to shoot or not to shoot
@@ -126,22 +137,26 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 		 * |0000|0|stay still
 		 * |1100|0|go left
 		 * |1000|0|go right
-		 * |0000|0|go left
-		 * 
+		 * |0010|0|go up
+		 * |0000|0|go(ing?) down(?)
 		 */
+		String[] additions = new String[3];
+		additions[0] = "1100";
+		additions[1] = "1000";
+		additions[2] = "0010";
 		
-		
-		
+		for(int i=0; i<3; i++)
+		{
+			String tmp = state.substring(0,4);
+			
+			tmp+=additions[i];
+			tmp+=state.substring(7, 21);
+			additions[i] = tmp;
+			
+			actions[i] = additions[i];
+		}	
 		
 		return actions;
-	}
-	
-	//encode the action to get to state from prevState
-	public boolean [] encodeAction(String prevState, String state)
-	{
-		boolean[] act = getEmptyAction();
-		
-		return act;
 	}
 	
 	public boolean[] getEmptyAction()
@@ -151,6 +166,54 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 			act[i] = false;
 		return act;
 	}
+	
+	//get the reward for a certain action
+	public double getR(String act)
+	{
+		return R.get(act);
+	}
+	
+	//return the action with the highest reward
+	public String getMaxR(String[] acts)
+	{
+		int j=0;
+		double maxR = 0;
+		for(int i=0; i<acts.length;i++)
+		{
+			if(getR(acts[i])>maxR)
+			{
+				j = i;
+				maxR = getR(acts[i]);
+			}
+		}
+		return acts[j];
+	}
+	
+	
+	public double getMaxQ(String state)
+	{
+		Hashtable<String, Double> options = Q.get(state);
+		
+		double max = 0;
+		
+		//iterate over each Q value and return the max
+		//keep the entry just in case
+		Map.Entry<String, Double> tmp;
+		Iterator<Map.Entry<String, Double>> it = options.entrySet().iterator();
+		while(it.hasNext())
+		{
+			Map.Entry<String, Double> entry = it.next();
+			if(entry.getValue()>max)
+			{
+				max = entry.getValue();
+				tmp = entry;
+			}
+		}
+		
+		return max;
+		//return tmp.getKey(
+	}
+	//===============================================================MARIO ENCODING===========================================================
 	
 	public String encodeMarioMode()
 	{
@@ -401,7 +464,20 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 	}
 	
 	
+	//encode the action to get to state from prevState
+	public boolean [] encodeAction(String state)
+	{
+		boolean[] act = getEmptyAction();
+		String next = state.substring(3, 7);
+		
+		// index as such => act[Mario.KEY_JUMP] = false;
+		
+		
+		
+		return act;
+	}	
 	
+	//================================================================================LEARNING AND REWARDS======================================
 	@Override
 	public void learn() {
 		// TODO Auto-generated method stub
