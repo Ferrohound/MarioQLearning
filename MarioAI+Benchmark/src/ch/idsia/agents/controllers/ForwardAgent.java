@@ -68,6 +68,8 @@ private boolean DangerOfGap()
 public boolean[] getAction()
 {
     // this Agent requires observation integrated in advance.
+	
+	System.out.println("");
 
     if (getReceptiveFieldCellValue(marioCenter[0], marioCenter[1] + 2) != 0 ||
             getReceptiveFieldCellValue(marioCenter[0], marioCenter[1] + 1) != 0 ||
