@@ -9,6 +9,11 @@ import ch.idsia.benchmark.mario.engine.sprites.Mario;
 import ch.idsia.benchmark.mario.environments.Environment;
 import ch.idsia.benchmark.tasks.ProgressTask;
 
+/*
+ * Neil and Fuller
+ * 
+ */
+
 public class MarioReinforcementLearning extends BasicMarioAIAgent implements LearningAgent
 {
 	boolean evaluating = false;
@@ -21,11 +26,15 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 	boolean testing_state_1 = true;
 	float[] previous_pos;
 	
+	ProgressTask task;
+	
 	//hash table of Q values
 	//input a string, get a hashtable of all the possible actions from that string
 	//and their respective Q values
-	//bool[] instead of string?
 	Hashtable<String, Hashtable<String, Double>> Q;
+	
+	//reward table, reward mario for going right and upwards
+	//punish for colliding with enemies and going left
 	Hashtable<String, Double> R;
 	
 	
@@ -38,6 +47,15 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 		Q = new Hashtable<String, Hashtable<String, Double>>();
 		R = new Hashtable<String, Double>();
 		
+		init();
+		
+	}
+	
+	@Override
+	public void init() {
+		// TODO Auto-generated method stub
+		//initialize the simulation
+		
 	}
 	
 	//============================================================================"GET" FUNCTIONS===========================================
@@ -45,6 +63,8 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 	{
 		if(testing_state_1)
 		{
+			//update the Q-Values
+			learn();
 			current_state = getState();
 			if(evaluating)
 			{
@@ -59,7 +79,7 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 				 * Otherwise, follow the path - "do what you're supposed to"
 				 */
 				
-						
+				evaluating = false;
 			}
 		}
 		
@@ -113,13 +133,22 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 		//encode the best action from options and store it in act
 		act = encodeAction(nextState);
 		
-		//============================================================================UPDATE QTable=========================
+		//============================================================================UPDATE QTable============================
 		options = Q.get(currentState);
 		double newQ = options.get(actions[j]);
-		newQ += alpha * (R.get(currentState) + (gamma * getMaxQ(currentState)) - newQ);
+		
+		double rwd = getReward(currentState, nextState);
+		
+		newQ += alpha * (rwd + (gamma * getMaxQ(currentState)) - newQ);
 		options.put(currentState, newQ);
 		
 		return act;
+	}
+	
+	public double getReward(String currentState, String nextState)
+	{
+		
+		return 0;
 	}
 	
 	//get all of the actions possible from the current state
@@ -481,7 +510,15 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 	@Override
 	public void learn() {
 		// TODO Auto-generated method stub
+		//update the Q table, then set evaluate to true and make
+		//the best choice based on that
 		
+		for(int i=0; i<5000; i++)
+		{
+			
+		}
+		
+		evaluating = true;
 	}
 
 	//reward mario for moving right and upwards
@@ -490,6 +527,7 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 	@Override
 	public void giveReward(float reward) {
 		// TODO Auto-generated method stub
+		//I assume this is just supplementing the Q value for the current state?
 		
 	}
 
@@ -502,7 +540,7 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 	@Override
 	public void setTask(ProgressTask task) {
 		// TODO Auto-generated method stub
-		
+		this.task = task;
 	}
 
 	@Override
@@ -514,12 +552,7 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 	@Override
 	public Agent getBestAgent() {
 		// TODO Auto-generated method stub
+		//don't need this
 		return null;
-	}
-
-	@Override
-	public void init() {
-		// TODO Auto-generated method stub
-		
 	}
 }
