@@ -31,6 +31,8 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 	String current_state = "";
 	float[] previous_pos;
 	
+	int numEpisodes = 30;
+	
 	Random rand = new Random();
 	
 	
@@ -92,7 +94,7 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 	}
 	public boolean[] getExplorationAction()
 	{
-		System.out.println(" E X P L O R I N G");
+		//System.out.println(" E X P L O R I N G");
 		//get the list of possible actions
 		String[] possible_states = getStatesFromState(current_state);
 		String nextState = possible_states[rand.nextInt(possible_states.length)];
@@ -100,7 +102,7 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 	}
 	public boolean[] getBestAction()
 	{
-		System.out.println(" F O L L O W I N G    Q T A B L E");
+		//System.out.println(" F O L L O W I N G    Q T A B L E");
 		// TO DO: Make it actually choose its best action from the Q table
 	
 		//get the list of actions
@@ -122,7 +124,7 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 		}
 		
 		String nextState = HighestState;
-		System.out.println(nextState);
+		//System.out.println(nextState);
 		
 		//encode the best action from possible_states into an action
 		boolean[] act = encodeActionToState(nextState);
@@ -155,23 +157,6 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 		action = act;
 		return act;
 	}
-	
-	private void setFireMode()
-	{
-		environment.levelScene.mario.setMode(true,true);
-	}
-	
-	private void setBigMode()
-	{
-		environment.levelScene.mario.setMode(true,false);
-	}
-	
-	private void setSmallMode()
-	{
-		environment.levelScene.mario.setMode(false,false);
-	}
-	
-	
 	
 	
 	public double updateFormula(String current, String next, double reward, double q)
@@ -237,20 +222,20 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 			System.out.println("Already contained that state!");
 		}
 		//reward for going right
-		System.out.println(state);
+		//System.out.println(state);
 		
 		if(state.charAt(4) == '1')
 		{
-			System.out.println("rewarding right state");
+			//System.out.println("rewarding right state");
 			R.put(state, R.get(state) + right_reward);
 		}
 		if(state.charAt(6) == '1')
 		{
-			System.out.println("rewarding up state");
+			//System.out.println("rewarding up state");
 			R.put(state, R.get(state) + up_reward);
 		}
 		
-		System.out.printf("state: %s  reward: %f\n", state, R.get(state));
+		//System.out.printf("state: %s  reward: %f\n", state, R.get(state));
 		return R.get(state);
 	}
 	
@@ -648,7 +633,38 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 	@Override
 	public void learn() {
 		// TODO Auto-generated method stub
+		for(int i=0; i<numEpisodes;i++)
+		{
+			task.evaluate(this);
+			if(i<10)
+				setSmallMode();
+			
+			else if(i<20)
+				setBigMode();
+			
+			else
+				setFireMode();
+		}
+		System.out.println("Complete!");
+		
+		//turn visualization on for the last run
+		task.setVisualization(true);
 		task.evaluate(this);
+	}
+	
+	private void setFireMode()
+	{
+		environment.levelScene.mario.setMode(true,true);
+	}
+	
+	private void setBigMode()
+	{
+		environment.levelScene.mario.setMode(true,false);
+	}
+	
+	private void setSmallMode()
+	{
+		environment.levelScene.mario.setMode(false,false);
 	}
 
 	//reward mario for moving right and upwards

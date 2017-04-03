@@ -62,6 +62,12 @@ private float evaluateSingleLevel(int ld, int tl, int ls, boolean vis, Agent con
     return distanceTravelled;
 }
 
+public void setVisualization(boolean visualization)
+{
+    options.setVisualization(visualization);
+    //setParameterValue("-vis", s(visualization));
+}
+
 public float[] evaluate(Agent controller)
 {
 //        controller.reset();
