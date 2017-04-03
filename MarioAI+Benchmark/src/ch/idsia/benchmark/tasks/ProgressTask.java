@@ -1,6 +1,8 @@
 package ch.idsia.benchmark.tasks;
 
 import ch.idsia.agents.Agent;
+import ch.idsia.agents.BasicLearningAgent;
+import ch.idsia.agents.QLearning;
 import ch.idsia.benchmark.mario.engine.GlobalOptions;
 import ch.idsia.tools.CmdLineOptions;
 
@@ -23,12 +25,21 @@ private int fitnessEvaluations = 0;
 public int uid;
 private String fileTimeStamp = "-uid-" + uid + "-" + GlobalOptions.getTimeStamp();
 
+public QLearning agent;
+
 //    private int startingSeed;
 
 public ProgressTask(CmdLineOptions evaluationOptions)
 {
     super(evaluationOptions);
     setOptions(evaluationOptions);
+    //System.out.println("Constructor controller = " + agent);
+    
+    //agent =  (QLearning) options.getAgent();
+    agent = new QLearning("OurBoy");
+    //System.out.println(agent);
+    agent.setTask(this);
+    agent.init();
 }
 
 public int totalEpisodes = 0;

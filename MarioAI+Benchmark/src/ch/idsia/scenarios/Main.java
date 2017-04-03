@@ -1,6 +1,7 @@
 package ch.idsia.scenarios;
 
 import ch.idsia.benchmark.tasks.BasicTask;
+import ch.idsia.benchmark.tasks.ProgressTask;
 import ch.idsia.tools.CmdLineOptions;
 
 /**
@@ -17,20 +18,25 @@ public static void main(String[] args)
 //        final Agent agent = new ForwardAgent();
 //        final Agent agent = cmdLineOptions.getAgent();
 //        final Agent a = AgentsPool.load("ch.idsia.controllers.agents.controllers.ForwardJumpingAgent");
-    final BasicTask basicTask = new BasicTask(cmdLineOptions);
-//        for (int i = 0; i < 10; ++i)
-//        {
-//            int seed = 0;
-//            do
-//            {
-//                cmdLineOptions.setLevelDifficulty(i);
-//                cmdLineOptions.setLevelRandSeed(seed++);
-    basicTask.reset(cmdLineOptions);
-    basicTask.runOneEpisode();
-    System.out.println(basicTask.getEnvironment().getEvaluationInfoAsString());
-//            } while (basicTask.getEnvironment().getEvaluationInfo().marioStatus != Environment.MARIO_STATUS_WIN);
-//        }
+    final ProgressTask task = new ProgressTask(cmdLineOptions);
+//  for (int i = 0; i < 10; ++i)
+//  {
+//      int seed = 0;
+//      do
+//      {
+//          cmdLineOptions.setLevelDifficulty(i);
+//          cmdLineOptions.setLevelRandSeed(seed++);
+/* basicTask.reset(cmdLineOptions);
+basicTask.runOneEpisode();
+System.out.println(basicTask.getEnvironment().getEvaluationInfoAsString());
+//      } while (basicTask.getEnvironment().getEvaluationInfo().marioStatus != Environment.MARIO_STATUS_WIN);
+//  }
 //
+* */
+//task.reset(cmdLineOptions);
+//task.runOneEpisode();
+//task.reset(cmdLineOptions);
+    System.out.println(task.getEnvironment().getEvaluationInfoAsString());
     System.exit(0);
 }
 

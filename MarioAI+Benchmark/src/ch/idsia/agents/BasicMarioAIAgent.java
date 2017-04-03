@@ -1,6 +1,7 @@
 package ch.idsia.agents;
 
 import ch.idsia.benchmark.mario.environments.Environment;
+import ch.idsia.benchmark.mario.environments.MarioEnvironment;
 
 /**
  * Created by IntelliJ IDEA.
@@ -41,6 +42,8 @@ protected int getKillsByShell;
 protected int receptiveFieldWidth;
 protected int receptiveFieldHeight;
 
+protected MarioEnvironment environment;
+
 // values of these variables could be changed during the Agent-Environment interaction.
 // Use them to get more detailed or less detailed description of the level.
 // for information see documentation for the benchmark <link: marioai.org/marioaibenchmark/zLevels
@@ -60,8 +63,9 @@ public boolean[] getAction()
 
 }
 
-public void integrateObservation(Environment environment)
+public void integrateObservation(Environment env)
 {
+	environment = (MarioEnvironment) env;
     levelScene = environment.getLevelSceneObservationZ(zLevelScene);
     enemies = environment.getEnemiesObservationZ(zLevelEnemies);
     mergedObservation = environment.getMergedObservationZZ(1, 0);
@@ -110,16 +114,18 @@ public void setName(String Name) { this.name = Name; }
 
 public int getReceptiveFieldCellValue(int x, int y)
 {
+	//x+=11;
+	//y+=11;
     if (x < 0 || x >= levelScene.length || y < 0 || y >= levelScene[0].length)
-        return 0;
+        return -1000;
 
     return levelScene[x][y];
 }
 
 public int getEnemyFieldCellValue(int x, int y)
 {
-	x+=11;	// account for Mario being in the middle of the screen
-	y+=11;	// account for Mario being in the middle of the screen
+	x+=9;	// account for Mario being in the middle of the screen
+	y+=10;	// account for Mario being in the middle of the screen
 	
     if (x < 0 || x >= enemies.length || y < 0 || y >= enemies[0].length)
         return 0;

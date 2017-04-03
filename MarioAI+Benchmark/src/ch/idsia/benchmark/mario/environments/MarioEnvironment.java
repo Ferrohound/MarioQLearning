@@ -139,6 +139,11 @@ public int getMarioMode()
     return levelScene.getMarioMode();
 }
 
+public void setMarioMode(int m)
+{
+	levelScene.setMarioMode(m);
+}
+
 public float[] getEnemiesFloatPos()
 {
     return levelScene.getEnemiesFloatPos();
