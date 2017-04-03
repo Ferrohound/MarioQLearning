@@ -25,6 +25,7 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 	double epsilon = 0.3;
 	double alpha = 0.8;
 	double gamma = 0.6;
+	double initial_q_value = -.1;
 	
 	float difference_threshold = 0.1f;
 	String current_state = "";
@@ -55,7 +56,7 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 		Q = new Hashtable<String, Hashtable<String, Double>>();
 		R = new Hashtable<String, Double>();
 		
-		init();
+		//init();
 		
 	}
 	
@@ -64,6 +65,8 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 		// TODO Auto-generated method stub
 		//initialize the simulation
 		
+		// start the simulation
+		learn();
 	}
 	
 	//============================================================================"GET" FUNCTIONS===========================================
@@ -75,12 +78,16 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 	
 	public String getState()
 	{
+		System.out.println("Beginning to encode state");
 		String state = "";
 		state += encodeMarioMode() + "|";
+		System.out.println("Calling encodeMarioDirection()...");
 		state += encodeMarioDirection() + "|";
+		System.out.println("Complete.");
 		state += encodeMarioJump() + "|";
 		state += encodeMarioGround() + "|";
-		state += encodeNearbyEnemies() /*+ "|"*/;
+		state += encodeNearbyEnemies() + "|";
+		state += encodeObstaclesInFront() + "|";
 		return state;
 	}
 	public boolean[] getExplorationAction()
@@ -125,15 +132,28 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 
 		//get the HASH of actions from that state
 		//updateQTable(currentState, nextState);
-		Hashtable<String, Double> nextStateHash = Q.get(currentState);
-		double newQ = nextStateHash.get(nextState);
+		Hashtable<String, Double> currentStateQ = Q.get(currentState);
+		//make sure the thing isn't null
+		if (currentStateQ == null)
+		{
+			Q.put(currentState, new Hashtable<String, Double>());
+			currentStateQ = Q.get(currentState);
+		}
+		
+		double newQ;
+		
+		if(!currentStateQ.containsKey(nextState))
+			newQ = initial_q_value;
+		else
+			newQ = currentStateQ.get(nextState);
 		
 		//calculate the new Q value
 		newQ += updateFormula(currentState, nextState, HighestReward, newQ);
 		
-		newQ += alpha * (HighestReward + (gamma * getMaxQ(nextState)) - newQ);
-		nextStateHash.put(currentState, newQ);
+		//newQ += alpha * (HighestReward + (gamma * getMaxQ(nextState)) - newQ);
+		currentStateQ.put(currentState, newQ);
 		
+		action = act;
 		return act;
 	}
 	
@@ -219,6 +239,12 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 	{
 		Hashtable<String, Double> options = Q.get(state);
 		
+		if(options == null)
+		{
+			Q.put(state, new Hashtable<String, Double>());
+			return initial_q_value;
+		}
+		
 		double greatestQ = -Double.MAX_VALUE;
 		
 		//iterate over each Q value and return the max
@@ -255,35 +281,44 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 	}
 	public String encodeMarioDirection()
 	{
+		System.out.println("Starting of encodeMarioDirection()...");
 		String msg = "";
-		
+		System.out.printf("KEY_RIGHT: %b\tKEY_LEFT: %b\n", action[Mario.KEY_RIGHT], action[Mario.KEY_LEFT]);
 		// make x direction encoding
-		if( !action[Mario.KEY_RIGHT] && !action[Mario.KEY_LEFT] )	// mario is not moving
-		{
-			msg += "00";
-		}
-		else if(action[Mario.KEY_RIGHT] && !action[Mario.KEY_LEFT])	// mario is going right
+		if(action[Mario.KEY_RIGHT] && !action[Mario.KEY_LEFT])	// mario is going right
 		{
 			msg += "11";
 		}
-		else 														// mario is going left
+		else if(!action[Mario.KEY_RIGHT] && action[Mario.KEY_LEFT] )													// mario is going left
 		{
 			msg += "10";
-		}
-		
-		// make y direction encoding
-		if( Math.abs(previous_pos[1] - marioFloatPos[1]) < difference_threshold )
-		{
-			msg += "00";
-		}
-		else if(marioFloatPos[1] > previous_pos[1])
-		{
-			msg += "11";
 		}
 		else
 		{
+			msg += "00";
+		}
+		/*
+		if(previous_pos == null)
+		{
+			msg+="00";
+			return msg;
+		}
+		*/
+		// make y direction encoding
+		if(action[Mario.KEY_JUMP] && !action[Mario.KEY_DOWN])	// mario is going right
+		{
+			msg += "11";
+		}
+		else if(!action[Mario.KEY_JUMP] && action[Mario.KEY_DOWN] )													// mario is going left
+		{
 			msg += "10";
 		}
+		else
+		{
+			msg += "00";
+		}
+		
+		System.out.println("direction encoded message: " + msg);
 		
 		return msg;
 	}
@@ -478,10 +513,31 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 			
 			break;
 		}
-		
+		//System.out.println("enemy encoding: " + msg);
 		return msg;
 	}
-	
+	public String encodeObstaclesInFront()
+	{
+		String msg = "0";
+		
+		int x = 9;
+		int y = 10;
+		if(marioMode == 0)
+		{
+			y = 9;
+		}
+		
+		int coord10 = getReceptiveFieldCellValue(x,y+0);
+		int coord11 = getReceptiveFieldCellValue(x,y-1);
+		int coord12 = getReceptiveFieldCellValue(x,y-2);
+		
+		if(coord10 != 0 || coord11 != 0 || coord12 != 0)
+		{
+			msg = "1";
+		}
+		//System.out.println("returning "+msg);
+		return msg;
+	}
 	
 	//encode the action to get to state from prevState
 	public boolean [] encodeActionToState(String goalState)
@@ -552,6 +608,7 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 	@Override
 	public void learn() {
 		// TODO Auto-generated method stub
+		task.evaluate(this);
 	}
 
 	//reward mario for moving right and upwards
