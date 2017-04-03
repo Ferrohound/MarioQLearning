@@ -23,7 +23,7 @@ public final class MarioEnvironment implements Environment
 {
 private int[] marioReceptiveFieldCenterPos = new int[2];
 
-private final LevelScene levelScene;
+public final LevelScene levelScene;
 //    private int frame = 0;
 private MarioVisualComponent marioVisualComponent;
 private Agent agent;
@@ -137,11 +137,6 @@ public float[] getMarioFloatPos()
 public int getMarioMode()
 {
     return levelScene.getMarioMode();
-}
-
-public void setMarioMode(int m)
-{
-	levelScene.setMarioMode(m);
 }
 
 public float[] getEnemiesFloatPos()

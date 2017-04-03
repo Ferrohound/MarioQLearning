@@ -1063,11 +1063,6 @@ public float[] getMarioFloatPos()
 public int getMarioMode()
 { return mario.getMode(); }
 
-public void setMarioMode(int m)
-{
-	mario.setMarioMode(m);
-}
-
 public boolean isMarioCarrying()
 { return mario.carried != null; }
 

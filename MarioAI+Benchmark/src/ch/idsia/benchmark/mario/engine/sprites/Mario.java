@@ -68,24 +68,6 @@ public int getMode()
     return ((large) ? 1 : 0) + ((fire) ? 1 : 0);
 }
 
-public void setMarioMode(int m)
-{
-	if(m==2)
-	{
-		levelScene.mario.setMode(true, true);
-	}
-	else if(m==1)
-	{
-		levelScene.mario.setMode(true, false);
-	}
-	else if(m==0)
-	{
-		levelScene.mario.setMode(false, false);
-	}
-
-    calcPic();
-}
-
 //    private static float GROUND_INERTIA = 0.89f;
 //    private static float AIR_INERTIA = 0.89f;
 
@@ -171,7 +153,7 @@ private void blink(boolean on)
     calcPic();
 }
 
-void setMode(boolean large, boolean fire)
+public void setMode(boolean large, boolean fire)
 {
 //        System.out.println("large = " + large);
     if (fire) large = true;

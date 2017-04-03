@@ -15,11 +15,6 @@ public class QLearning extends MarioReinforcementLearning implements LearningAge
 	
 	public boolean[] getAction()
 	{
-		if(marioState[1] != 2)
-		{
-			System.out.println("\n\nOMG HE IS A SMALL BOG :O :O :O\n");
-			environment.setMarioMode(2);
-		}
 		
 		//System.out.println("why?");
 		if(testing_state_1)
