@@ -30,8 +30,26 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 	float difference_threshold = 0.1f;
 	String current_state = "";
 	float[] previous_pos;
+	int prevMarioMode = -1;
+	int prevEnemiesStomped = 0;
+	int prevEnemiesFireballed =  0;
 	
-	int numEpisodes = 30;
+
+	final double right_reward = 2.0;
+	final double up_reward = 2.0;
+	final double damage_reward = -50.0;
+	final double fire_reward = 15.0;
+	final double stomp_reward = 30.0;
+	final double win_reward = 10000.0;
+	final double death_reward = -10000.0;
+	
+	boolean running = false;
+	int progress = 1;
+	
+	
+	
+	int numEpisodes = 300;
+	
 	
 	Random rand = new Random();
 	
@@ -90,19 +108,27 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 		state += encodeMarioGround() + "|";
 		state += encodeNearbyEnemies() + "|";
 		state += encodeObstaclesInFront() + "|";
+		state += encodeRanIntoEnemy() + "|";
+		state += encodeKills() + "|";
+		state += encodeMarioStatus() + "|";
+		//System.out.println(current_state);
 		return state;
 	}
 	public boolean[] getExplorationAction()
 	{
-		//System.out.println(" E X P L O R I N G");
+		giveRCurrent();
+
 		//get the list of possible actions
 		String[] possible_states = getStatesFromState(current_state);
 		String nextState = possible_states[rand.nextInt(possible_states.length)];
+		
+		updatePreviousVariables();
+		
 		return encodeActionToState(nextState);
 	}
 	public boolean[] getBestAction()
 	{
-		//System.out.println(" F O L L O W I N G    Q T A B L E");
+		giveRCurrent();
 		// TO DO: Make it actually choose its best action from the Q table
 	
 		//get the list of actions
@@ -115,6 +141,7 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 		for(int i=0; i<possible_states.length;i++)
 		{
 			//find the state with the highest reward
+			//giveR(possible_states[i]);
 			double reward = getR(possible_states[i]);
 			if(reward > HighestReward)
 			{
@@ -158,7 +185,12 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 		return act;
 	}
 	
-	
+	public void updatePreviousVariables()
+	{
+		prevMarioMode = marioMode;
+		prevEnemiesStomped = environment.levelScene.getKillsByStomp();
+		prevEnemiesFireballed = environment.levelScene.getKillsByFire();
+	}
 	public double updateFormula(String current, String next, double reward, double q)
 	{
 		return 0.0;
@@ -207,19 +239,64 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 		return act;
 	}
 	
-	//get the reward for a certain action
 	public double getR(String state)
 	{
-		double right_reward = 2;
-		double up_reward = 2;
-		
+		giveR(state);
+		/*
 		if(!R.contains(state))
 		{
 			R.put(state, 0.0);
 		}
+		*/
+		return R.get(state);
+	}
+	public void giveRCurrent()
+	{
+		if(!R.contains(current_state))
+		{
+			R.put(current_state, initial_q_value);
+		}
+		
+		if(current_state.charAt(23) == '1')
+		{
+			//System.out.println("rewarding damaged state");
+			R.put(current_state, R.get(current_state) + damage_reward);
+		}
+		
+		if(current_state.charAt(25) == '1')
+		{
+			//System.out.println("rewarding stomp state");
+			R.put(current_state,  R.get(current_state)+stomp_reward);
+		}
+		if(current_state.charAt(26) == '1')
+		{
+			//System.out.println("rewarding fireball state");
+			R.put(current_state,  R.get(current_state)+fire_reward);
+		}
+		
+		if(current_state.charAt(28) == '1' && current_state.charAt(29) == '1')
+		{
+			//System.out.println("YOU DID IT!");
+			R.put(current_state, R.get(current_state)+ win_reward);
+		}
+		else if(current_state.charAt(29) == '1')
+		{
+			//System.out.println("YOU CLOWN!");
+			R.put(current_state, R.get(current_state)+ death_reward);
+		}
+	}
+	
+	//get the reward for a certain action
+	public void giveR(String state)
+	{
+		
+		if(!R.contains(state))
+		{
+			R.put(state, initial_q_value);
+		}
 		else
 		{
-			System.out.println("Already contained that state!");
+			//System.out.println("Already contained that state!");
 		}
 		//reward for going right
 		//System.out.println(state);
@@ -235,8 +312,6 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 			R.put(state, R.get(state) + up_reward);
 		}
 		
-		//System.out.printf("state: %s  reward: %f\n", state, R.get(state));
-		return R.get(state);
 	}
 	
 	public double getReward(String currentState, String nextState)
@@ -305,6 +380,21 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 		return msg;
 		
 	}
+	
+	public String encodeMarioStatus()
+	{
+		//Mario.STATUS_WIN
+		if(marioStatus == Mario.STATUS_DEAD)
+		{
+			return "01";
+		}
+		if(marioStatus == Mario.STATUS_WIN)
+		{
+			return "11";
+		}
+		
+		return "00";
+	}
 	public String encodeMarioDirection()
 	{
 		//System.out.println("Starting of encodeMarioDirection()...");
@@ -344,7 +434,7 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 			msg += "00";
 		}
 		
-		System.out.println("direction encoded message: " + msg);
+		//System.out.println("direction encoded message: " + msg);
 		
 		return msg;
 	}
@@ -564,6 +654,35 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 		//System.out.println("returning "+msg);
 		return msg;
 	}
+	public String encodeRanIntoEnemy()
+	{
+		//System.out.println("Mario Mode => " + marioMode+" prev Mode => " + prevMarioMode);
+		if(marioMode < prevMarioMode)
+		{
+			prevMarioMode = marioMode;
+			//System.out.println("Ran into an enemy..");
+			return "1";
+		}
+		return "0";
+	}
+	public String encodeKills()
+	{
+		String msg = "";
+		//prevEnemiesStomped = environment.levelScene.getKillsByStomp();
+		//prevEnemiesFireballed = environment.levelScene.getKillsByFire();
+		if(environment.levelScene.getKillsByStomp()>prevEnemiesStomped)
+			msg+="1";
+		else
+			msg+="0";
+		
+		if(environment.levelScene.getKillsByFire()>prevEnemiesFireballed)
+			msg+="1";
+		else
+			msg+="0";
+		
+		return msg;
+	}
+	
 	
 	//encode the action to get to state from prevState
 	public boolean [] encodeActionToState(String goalState)
@@ -635,15 +754,44 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 		// TODO Auto-generated method stub
 		for(int i=0; i<numEpisodes;i++)
 		{
-			task.evaluate(this);
-			if(i<10)
-				setSmallMode();
-			
-			else if(i<20)
-				setBigMode();
-			
+			if(i%100 == 0)
+				task.setVisualization(true);
 			else
-				setFireMode();
+				task.setVisualization(false);
+			
+			progress = 1;
+			
+			task.evaluate(this);
+			running = false;
+			//System.out.println(progress);
+		}
+		
+		for(int i=0; i<numEpisodes;i++)
+		{
+			if(i%100 == 0)
+				task.setVisualization(true);
+			else
+				task.setVisualization(false);
+			
+			progress = 2;
+			
+			task.evaluate(this);
+			running = false;
+			//System.out.println(progress);
+		}
+
+		for(int i=0; i<numEpisodes;i++)
+		{
+			if(i%100 == 0)
+				task.setVisualization(true);
+			else
+				task.setVisualization(false);
+			
+			progress = 3;
+			
+			task.evaluate(this);
+			running = false;
+			//System.out.println(progress);
 		}
 		System.out.println("Complete!");
 		
@@ -652,17 +800,17 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 		task.evaluate(this);
 	}
 	
-	private void setFireMode()
+	protected void setFireMode()
 	{
 		environment.levelScene.mario.setMode(true,true);
 	}
 	
-	private void setBigMode()
+	protected void setBigMode()
 	{
 		environment.levelScene.mario.setMode(true,false);
 	}
 	
-	private void setSmallMode()
+	protected void setSmallMode()
 	{
 		environment.levelScene.mario.setMode(false,false);
 	}
