@@ -128,6 +128,8 @@ float[] getEvaluationInfoAsFloats();
 
 String getEvaluationInfoAsString();
 
+Float getFitness();
+
 EvaluationInfo getEvaluationInfo();
 
 void reset(CmdLineOptions cmdLineOptions);

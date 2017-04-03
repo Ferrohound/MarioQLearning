@@ -193,6 +193,11 @@ public String toString()
             ((Memo.equals("")) ? "" : "\nMEMO INFO: " + Memo);
 }
 
+public Float getFitness()
+{
+	return computeWeightedFitness();
+}
+
 public String toStringSingleLine()
 {
     return "\n[MarioAI] ~ Evaluation Results:" +

@@ -36,7 +36,7 @@ System.out.println(basicTask.getEnvironment().getEvaluationInfoAsString());
 //task.reset(cmdLineOptions);
 //task.runOneEpisode();
 //task.reset(cmdLineOptions);
-    System.out.println(task.getEnvironment().getEvaluationInfoAsString());
+    //System.out.println(task.getEnvironment().getEvaluationInfoAsString());
     System.exit(0);
 }
 

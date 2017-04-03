@@ -35,10 +35,10 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 	int prevEnemiesFireballed =  0;
 	
 
-	final double right_reward = 2.0;
-	final double up_reward = 2.0;
-	final double damage_reward = -50.0;
-	final double fire_reward = 15.0;
+	final double right_reward = 1.0;
+	final double up_reward = 1.0;
+	final double damage_reward = -200.0;
+	final double fire_reward = 45.0;
 	final double stomp_reward = 30.0;
 	final double win_reward = 10000.0;
 	final double death_reward = -10000.0;
@@ -48,7 +48,7 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 	
 	
 	
-	int numEpisodes = 300;
+	int numEpisodes = 3000;
 	
 	
 	Random rand = new Random();
@@ -182,6 +182,7 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 		currentStateQ.put(current_state, newQ);
 		
 		action = act;
+		act[Mario.KEY_SPEED] = !act[Mario.KEY_SPEED];
 		return act;
 	}
 	
@@ -691,17 +692,17 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 		
 		// should Mario shoot or nah
 		//if he is to shoot
-		if(goalState.charAt(0) == '1' && goalState.charAt(1) == '1')
+	/*	if(goalState.charAt(0) == '1' && goalState.charAt(1) == '1')
 		{	// if he is fire mario, always shoot
 			// this is consistent encoding from our hand agent that we developed originally
-			act[Mario.KEY_SPEED] = true;
+			act[Mario.KEY_SPEED] = !act[Mario.KEY_SPEED];
 		}
 		else
 		{
 			act[Mario.KEY_SPEED] = false;
 		}
 		
-		
+		*/
 		// --- this is not truly the direction of mario's velocity ---
 		if(goalState.charAt(3)== '1')
 		{
@@ -752,52 +753,53 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 	@Override
 	public void learn() {
 		// TODO Auto-generated method stub
+		progress = 1;
 		for(int i=0; i<numEpisodes;i++)
 		{
-			if(i%100 == 0)
+			//change mario mode every 20
+			if(i%20 == 0 && i!=0)
+			{
 				task.setVisualization(true);
+				switch(progress)
+				{
+				case 1:
+					progress = 2;
+				break;
+				
+				case 2:
+					progress = 3;
+				break;
+				
+				case 3:
+					progress = 1;
+				break;
+				}
+			}
 			else
+			{
 				task.setVisualization(false);
-			
-			progress = 1;
+			}
 			
 			task.evaluate(this);
+			if(i%20 != 0 && i != 0)
+			{
+				System.out.printf("%d:\t%f\n", i, task.getEnvironment().getFitness());
+			}
+			else
+			{
+				System.out.printf("marioMode(%d) - [%d] final training - \t%f\n", progress-1, i, task.getEnvironment().getFitness());
+			}
 			running = false;
 			//System.out.println(progress);
 		}
+		System.out.println("Training Complete!");
 		
-		for(int i=0; i<numEpisodes;i++)
-		{
-			if(i%100 == 0)
-				task.setVisualization(true);
-			else
-				task.setVisualization(false);
-			
-			progress = 2;
-			
-			task.evaluate(this);
-			running = false;
-			//System.out.println(progress);
-		}
-
-		for(int i=0; i<numEpisodes;i++)
-		{
-			if(i%100 == 0)
-				task.setVisualization(true);
-			else
-				task.setVisualization(false);
-			
-			progress = 3;
-			
-			task.evaluate(this);
-			running = false;
-			//System.out.println(progress);
-		}
-		System.out.println("Complete!");
-		
-		//turn visualization on for the last run
+		progress = 3;
 		task.setVisualization(true);
 		task.evaluate(this);
+		System.out.printf("%f\t%d\n", task.getEnvironment().getFitness(), numEpisodes);
+		task.setVisualization(false);
+		System.out.printf("Size of the QTable: %d", Q.size());
 	}
 	
 	protected void setFireMode()

@@ -339,4 +339,10 @@ public void closeRecorder()
         }
     }
 }
+
+@Override
+public Float getFitness() {
+	// TODO Auto-generated method stub
+	return this.getEvaluationInfo().getFitness();
+}
 }
