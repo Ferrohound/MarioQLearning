@@ -23,8 +23,8 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 	boolean exploring = false;
 	boolean training = true;
 	double epsilon = 0.3;
-	double alpha = 0.8;
-	double gamma = 0.6;
+	double alpha0 = 0.8;
+	double gamma = 0.8;
 	double initial_q_value = -.1;
 	
 	float difference_threshold = 0.1f;
@@ -35,13 +35,13 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 	int prevEnemiesFireballed =  0;
 	
 
-	final double right_reward = 1.0;
-	final double up_reward = 1.0;
-	final double damage_reward = -200.0;
-	final double fire_reward = 45.0;
-	final double stomp_reward = 30.0;
-	final double win_reward = 10000.0;
-	final double death_reward = -10000.0;
+	final double right_reward = 0.1;
+	final double up_reward = 0.0;
+	final double damage_reward = -50.0;
+	final double fire_reward = 10.0;
+	final double stomp_reward = 10.0;
+	final double win_reward = 1000.0;
+	final double death_reward = -200.0;
 	
 	boolean running = false;
 	int progress = 1;
@@ -66,6 +66,10 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 	//punish for colliding with enemies and going left
 	Hashtable<String, Double> R;
 	
+	//for the converging alpha
+	//access this for the alpha values
+	Hashtable<String, Hashtable<String, Integer>> AlphaHash;
+	
 	
 	
 	public MarioReinforcementLearning(String name)
@@ -75,6 +79,7 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 		previous_pos = marioFloatPos;
 		Q = new Hashtable<String, Hashtable<String, Double>>();
 		R = new Hashtable<String, Double>();
+		AlphaHash = new Hashtable<String, Hashtable<String, Integer>>();
 		
 		//init();
 		
@@ -107,12 +112,17 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 		state += encodeMarioJump() + "|";
 		state += encodeMarioGround() + "|";
 		state += encodeNearbyEnemies() + "|";
+		state += encodeMidRangeEnemies() + "|";
 		state += encodeObstaclesInFront() + "|";
 		state += encodeRanIntoEnemy() + "|";
 		state += encodeKills() + "|";
 		state += encodeMarioStatus() + "|";
 		//System.out.println(current_state);
 		return state;
+	}
+	public boolean probe(int x, int y)
+	{
+		return getEnemyFieldCellValue(x,y) != 0;
 	}
 	public boolean[] getExplorationAction()
 	{
@@ -176,13 +186,13 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 			newQ = currentStateQ.get(nextState);
 		
 		//calculate the new Q value
-		newQ += updateFormula(current_state, nextState, HighestReward, newQ);
+		newQ += updateFormula(current_state, nextState, HighestReward, newQ, calculateAlpha(nextState, act));
 		
 		//newQ += alpha * (HighestReward + (gamma * getMaxQ(nextState)) - newQ);
 		currentStateQ.put(current_state, newQ);
 		
 		action = act;
-		act[Mario.KEY_SPEED] = !act[Mario.KEY_SPEED];
+		//act[Mario.KEY_SPEED] = !act[Mario.KEY_SPEED];
 		return act;
 	}
 	
@@ -192,7 +202,59 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 		prevEnemiesStomped = environment.levelScene.getKillsByStomp();
 		prevEnemiesFireballed = environment.levelScene.getKillsByFire();
 	}
-	public double updateFormula(String current, String next, double reward, double q)
+	
+	// This function does a decreasing alpha value for repeated actions from the same state
+	public double calculateAlpha(String state, boolean[] act)
+	{
+		String act_str = getActionString(act);
+		// if the state is uniquequequequequeque
+		if(AlphaHash.contains(state))
+		{
+			Hashtable<String,Integer> alphas = AlphaHash.get(state);
+			if(alphas.contains(act_str))
+			{
+				// get the number of times the action has been taken
+				int repeats = alphas.get(act_str); // increase the counter for the times the action has been taken
+				alphas.put(act_str, repeats+1);
+				
+				return alpha0 / repeats;
+				
+			}
+			else
+			{
+				alphas.put(act_str,1);
+				return alpha0;
+			}
+		}
+		else
+		{
+			// loads up the new state into the AlphaHash, and puts the # of times the action is taken to 1
+			Hashtable<String,Integer> tmp = new Hashtable<String,Integer>();
+			tmp.put(act_str, 1);
+			
+			AlphaHash.put(state,tmp);
+			return alpha0;
+		}
+	}
+	
+	public String getActionString(boolean[] act)
+	{
+		String msg = "";
+		for(int i=0; i<act.length;i++)
+		{
+			if(act[i])
+			{
+				msg+="1";
+			}
+			else
+			{
+				msg+="0";
+			}
+		}
+		return msg;
+	}
+	
+	public double updateFormula(String current, String next, double reward, double q, double a)
 	{
 		return 0.0;
 	}
@@ -258,29 +320,29 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 			R.put(current_state, initial_q_value);
 		}
 		
-		if(current_state.charAt(23) == '1')
+		if(current_state.charAt(23+9) == '1')
 		{
 			//System.out.println("rewarding damaged state");
 			R.put(current_state, R.get(current_state) + damage_reward);
 		}
 		
-		if(current_state.charAt(25) == '1')
+		if(current_state.charAt(25+9) == '1')
 		{
 			//System.out.println("rewarding stomp state");
 			R.put(current_state,  R.get(current_state)+stomp_reward);
 		}
-		if(current_state.charAt(26) == '1')
+		if(current_state.charAt(26+9) == '1')
 		{
 			//System.out.println("rewarding fireball state");
 			R.put(current_state,  R.get(current_state)+fire_reward);
 		}
 		
-		if(current_state.charAt(28) == '1' && current_state.charAt(29) == '1')
+		if(current_state.charAt(28+9) == '1' && current_state.charAt(29+9) == '1')
 		{
 			//System.out.println("YOU DID IT!");
 			R.put(current_state, R.get(current_state)+ win_reward);
 		}
-		else if(current_state.charAt(29) == '1')
+		else if(current_state.charAt(29+9) == '1')
 		{
 			//System.out.println("YOU CLOWN!");
 			R.put(current_state, R.get(current_state)+ death_reward);
@@ -460,7 +522,7 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 		case 0: 	// little baby boy
 			
 			// -1,1
-			if(getEnemyFieldCellValue(-1,1) != 0)
+			if(probe(-1,1))
 			{
 				msg += "1";
 			}
@@ -470,7 +532,7 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 			}
 			
 			// 0,1
-			if(getEnemyFieldCellValue(0,1) != 0)
+			if(probe(0,1))
 			{
 				msg += "1";
 			}
@@ -480,7 +542,7 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 			}
 			
 			// 1,1
-			if(getEnemyFieldCellValue(1,1) != 0)
+			if(probe(1,1))
 			{
 				msg += "1";
 			}
@@ -490,7 +552,7 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 			}
 			
 			// 1,0
-			if(getEnemyFieldCellValue(1,0) != 0)
+			if(probe(1,0))
 			{
 				msg += "1";
 			}
@@ -500,7 +562,7 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 			}
 			
 			// 1,-1
-			if(getEnemyFieldCellValue(1,-1) != 0)
+			if(probe(1,-1))
 			{
 				msg += "1";
 			}
@@ -510,7 +572,7 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 			}
 			
 			// 0,-1
-			if(getEnemyFieldCellValue(0,-1) != 0)
+			if(probe(0,-1))
 			{
 				msg += "1";
 			}
@@ -520,7 +582,7 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 			}
 			
 			// -1,-1
-			if(getEnemyFieldCellValue(-1,-1) != 0)
+			if(probe(-1,-1))
 			{
 				msg += "1";
 			}
@@ -530,7 +592,7 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 			}
 			
 			// -1,0
-			if(getEnemyFieldCellValue(-1,0) != 0)
+			if(probe(-1,0))
 			{
 				msg += "1";
 			}
@@ -544,8 +606,8 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 		default: 	// "meat on them bones" Mario
 			
 			
-			// -1,2
-			if(getEnemyFieldCellValue(-1,2) != 0)
+			// top left 
+			if(probe(-1,1))
 			{
 				msg += "1";
 			}
@@ -554,8 +616,8 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 				msg += "0";
 			}
 			
-			// 0,2
-			if(getEnemyFieldCellValue(0,2) != 0)
+			// top middle
+			if(probe(0,1))
 			{
 				msg += "1";
 			}
@@ -564,8 +626,8 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 				msg += "0";
 			}
 			
-			// 1,2
-			if(getEnemyFieldCellValue(1,2) != 0)
+			// top right
+			if(probe(1,1))
 			{
 				msg += "1";
 			}
@@ -574,9 +636,8 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 				msg += "0";
 			}
 			
-			// 1,0
-			//check two cells instead of one
-			if(getEnemyFieldCellValue(1,1) != 0 || getEnemyFieldCellValue(1, 0)!=0)
+			// front
+			if(probe(1,0) || probe(1,-1))
 			{
 				msg += "1";
 			}
@@ -585,8 +646,8 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 				msg += "0";
 			}
 			
-			// 1,-1
-			if(getEnemyFieldCellValue(1,-1) != 0)
+			// bottom right
+			if(probe(1,-2))
 			{
 				msg += "1";
 			}
@@ -595,8 +656,8 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 				msg += "0";
 			}
 			
-			// 0,-1
-			if(getEnemyFieldCellValue(0,-1) != 0)
+			// bottom middle
+			if(probe(0,-2))
 			{
 				msg += "1";
 			}
@@ -605,8 +666,8 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 				msg += "0";
 			}
 			
-			// -1,-1
-			if(getEnemyFieldCellValue(-1,-1) != 0)
+			// bottom left
+			if(probe(-1,-2))
 			{
 				msg += "1";
 			}
@@ -615,9 +676,8 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 				msg += "0";
 			}
 			
-			// -1,0
-			//check two cells instead of just one
-			if(getEnemyFieldCellValue(-1,0) != 0 || getEnemyFieldCellValue(-1, 1)!=0)
+			// back
+			if(probe(-1,-1) || probe(-1, 0))
 			{
 				msg += "1";
 			}
@@ -633,6 +693,167 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 		//System.out.println("enemy encoding: " + msg);
 		return msg;
 	}
+	
+	public String encodeMidRangeEnemies()
+	{
+		String msg = "";
+		
+		switch(marioMode)
+		{
+		case 0: 	// little baby boy
+			// top left grouping
+			if(probe(-2,1) || probe(-2,2) || probe(-1,2))
+			{
+				msg += "1";
+			}
+			else
+			{
+				msg += "0";
+			}
+			// top middle grouping
+			if(probe(0,2))
+			{
+				msg += "1";
+			}
+			else
+			{
+				msg += "0";
+			}
+			// top right grouping
+			if(probe(1,2) || probe(2,2) || probe(2,1))
+			{
+				msg += "1";
+			}
+			else
+			{
+				msg += "0";
+			}
+			// front grouping
+			if(probe(2,0))
+			{
+				msg += "1";
+			}
+			else
+			{
+				msg += "0";
+			}
+			// bottom rightt grouping
+			if(probe(2,-1) || probe(2,-2) || probe(1,-2))
+			{
+				msg += "1";
+			}
+			else
+			{
+				msg += "0";
+			}
+			// bottom middle grouping
+			if(probe(0,-2))
+			{
+				msg += "1";
+			}
+			else
+			{
+				msg += "0";
+			}
+			// bottom left grouping
+			if(probe(-1,-2) || probe(-2,-2) || probe(-2,-1))
+			{
+				msg += "1";
+			}
+			else
+			{
+				msg += "0";
+			}
+			// back grouping
+			if(probe(-2,0))
+			{
+				msg += "1";
+			}
+			else
+			{
+				msg += "0";
+			}
+			break;
+		default: 	// "meat on them bones" Mario
+			// top left grouping
+			if(probe(-2,1) || probe(-2,2) || probe(-1,2))
+			{
+				msg += "1";
+			}
+			else
+			{
+				msg += "0";
+			}
+			// top middle grouping
+			if(probe(0,2))
+			{
+				msg += "1";
+			}
+			else
+			{
+				msg += "0";
+			}
+			// top right grouping
+			if(probe(1,2) || probe(2,2) || probe(2,1))
+			{
+				msg += "1";
+			}
+			else
+			{
+				msg += "0";
+			}
+			// front grouping
+			if(probe(2,0) || probe(2,-1))
+			{
+				msg += "1";
+			}
+			else
+			{
+				msg += "0";
+			}
+			// bottom right grouping
+			if(probe(2,-2) || probe(2,-3) || probe(1,-3))
+			{
+				msg += "1";
+			}
+			else
+			{
+				msg += "0";
+			}
+			// bottom middle grouping
+			if(probe(0,-3))
+			{
+				msg += "1";
+			}
+			else
+			{
+				msg += "0";
+			}			
+			// bottom left grouping
+			if(probe(-1,-3) || probe(-2,-3) || probe(-2,-2))
+			{
+				msg += "1";
+			}
+			else
+			{
+				msg += "0";
+			}
+			// back grouping
+			if(probe(-2,-1) || probe(-2,0))
+			{
+				msg += "1";
+			}
+			else
+			{
+				msg += "0";
+			}
+			break;
+		}
+		//System.out.println("midrange enemy encoding: " + msg);
+		return msg;
+	}
+	
+	
 	public String encodeObstaclesInFront()
 	{
 		String msg = "0";
@@ -754,40 +975,39 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 	public void learn() {
 		// TODO Auto-generated method stub
 		progress = 1;
-		for(int i=0; i<numEpisodes;i++)
+		for(int i=1; i<numEpisodes;i++)
 		{
-			//change mario mode every 20
-			if(i%20 == 0 && i!=0)
-			{
+			
+			// turn on visualization
+			if(i%120 == 0) {
 				task.setVisualization(true);
-				switch(progress)
-				{
-				case 1:
-					progress = 2;
-				break;
-				
-				case 2:
-					progress = 3;
-				break;
-				
-				case 3:
-					progress = 1;
-				break;
-				}
-			}
-			else
-			{
+			} else {
 				task.setVisualization(false);
 			}
 			
+			// change mario mode every 20
+			if(i%20 == 0) {
+				switch(progress){
+				case 1:
+					progress = 2; break;
+				case 2:
+					progress = 3; break;
+				case 3:
+					progress = 1; break;
+				}
+			}
+			
+			// actually run the simulation
 			task.evaluate(this);
-			if(i%20 != 0 && i != 0)
+			
+			if(i%20 != 0)
 			{
-				System.out.printf("%d:\t%f\n", i, task.getEnvironment().getFitness());
+				System.out.printf("%d:\t%f\t--QTable size: %d\n", i, task.getEnvironment().getFitness(), Q.size());
 			}
 			else
 			{
 				System.out.printf("marioMode(%d) - [%d] final training - \t%f\n", progress-1, i, task.getEnvironment().getFitness());
+				
 			}
 			running = false;
 			//System.out.println(progress);

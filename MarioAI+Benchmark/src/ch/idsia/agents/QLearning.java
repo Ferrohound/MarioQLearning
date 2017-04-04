@@ -8,7 +8,7 @@ public class QLearning extends MarioReinforcementLearning implements LearningAge
 	}
 	
 	//@override
-	public double updateFormula(String current, String next, double reward, double q)
+	public double updateFormula(String current, String next, double reward, double q, double alpha)
 	{
 		return alpha * (reward + (gamma * getMaxQ(next)) - q);
 	}
