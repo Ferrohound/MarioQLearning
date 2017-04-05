@@ -139,6 +139,7 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 	}
 	public boolean[] getBestAction()
 	{
+		System.out.println("MarioReinforcementLearning getBestAction()");
 		giveRCurrent();
 		// TO DO: Make it actually choose its best action from the Q table
 		//get the list of actions
@@ -178,18 +179,19 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 			currentStateQ = Q.get(current_state);
 		}
 		
-		double newQ;
+		double Q_val;
 		
 		if(!currentStateQ.containsKey(nextState))
-			newQ = initial_q_value;
+			Q_val = initial_q_value;
 		else
-			newQ = currentStateQ.get(nextState);
+			Q_val = currentStateQ.get(nextState);
 		
 		//calculate the new Q value
-		newQ += updateFormula(current_state, nextState, HighestReward, newQ, calculateAlpha(nextState, act));
+		// Q(s,a) = newQ
+		Q_val += updateFormula(nextState, HighestReward, Q_val, calculateAlpha(nextState, act));
 		
 		//newQ += alpha * (HighestReward + (gamma * getMaxQ(nextState)) - newQ);
-		currentStateQ.put(current_state, newQ);
+		currentStateQ.put(current_state, Q_val);
 		
 		//System.out.println(current_state);
 		
@@ -256,7 +258,7 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 		return msg;
 	}
 	
-	public double updateFormula(String current, String next, double reward, double q, double a)
+	public double updateFormula(String next, double reward, double q, double a)
 	{
 		return 0.0;
 	}
@@ -1035,15 +1037,15 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 			task.evaluate(this);
 			
 			
-			if(i%training_episodes != training_episodes-1)
-			{
+			//if(i%training_episodes != training_episodes-1)
+			//{
 				System.out.printf("%d (%d):\t%f\t--QTable size: %d\n", i, prog, task.getEnvironment().getFitness(), Q.size());
-			}
-			else
+			//}
+			/*else
 			{
 				System.out.printf("marioMode(%d) - [%d] final training - \t%f\n", prog, i, task.getEnvironment().getFitness());
 				
-			}
+			}*/
 			running = false;
 			//System.out.println(progress);
 		}
