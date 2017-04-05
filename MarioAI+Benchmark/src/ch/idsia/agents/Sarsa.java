@@ -17,13 +17,13 @@ public class Sarsa extends MarioReinforcementLearning implements LearningAgent {
 		{
 			switch(progress)
 			{
-			case 1:
+			case 0:
 				setSmallMode();
 			break;
-			case 2:
+			case 1:
 				setBigMode();
 			break;
-			case 3:
+			case 2:
 				setFireMode();
 			break;
 			}

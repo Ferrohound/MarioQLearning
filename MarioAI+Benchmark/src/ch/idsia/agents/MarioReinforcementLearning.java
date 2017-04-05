@@ -1019,12 +1019,12 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 			// change mario mode every 20
 			if(i%training_episodes == 0) {
 				switch(progress){
+				case 0:
+					progress = 1; break;
 				case 1:
 					progress = 2; break;
 				case 2:
-					progress = 3; break;
-				case 3:
-					progress = 1; break;
+					progress = 0; break;
 				}
 			}
 			int prog = progress;
