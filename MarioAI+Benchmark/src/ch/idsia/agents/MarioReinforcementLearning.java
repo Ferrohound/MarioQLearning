@@ -24,7 +24,7 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 	boolean training = true;
 	double epsilon = 0.3;
 	double alpha0 = 0.8;
-	double gamma = 0.8;
+	double gamma = 0.6;
 	double initial_q_value = -.1;
 	
 	float difference_threshold = 0.1f;
@@ -37,25 +37,22 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 
 	final double right_reward = 0.1;
 	final double up_reward = 0.0;
-	final double damage_reward = -50.0;
+	final double damage_reward = -100.0;
 	final double fire_reward = 10.0;
-	final double stomp_reward = 10.0;
+	final double shoot_reward = 0.1;
+	final double stomp_reward = 5.0;
 	final double win_reward = 1000.0;
-	final double death_reward = -200.0;
+	final double death_reward = -500.0;
 	
 	boolean running = false;
-	int progress = 1;
-	
-	
+	int progress = 0;
 	
 	int numEpisodes = 3000;
 	
-	
 	Random rand = new Random();
 	
-	
 	ProgressTask task;
-	int num_episodes = 20;
+	int training_episodes = 20;
 	
 	//hash table of Q values
 	//input a string, get a hashtable of all the possible actions from that string
@@ -117,6 +114,9 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 		state += encodeRanIntoEnemy() + "|";
 		state += encodeKills() + "|";
 		state += encodeMarioStatus() + "|";
+		//state += encodeMarioCanShoot() + "|";
+		state += encodeIsMarioShooting() + "|";
+		//state += encodeMarioshouldShoot() + "|";
 		//System.out.println(current_state);
 		return state;
 	}
@@ -130,6 +130,7 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 
 		//get the list of possible actions
 		String[] possible_states = getStatesFromState(current_state);
+		
 		String nextState = possible_states[rand.nextInt(possible_states.length)];
 		
 		updatePreviousVariables();
@@ -140,7 +141,6 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 	{
 		giveRCurrent();
 		// TO DO: Make it actually choose its best action from the Q table
-	
 		//get the list of actions
 		String[] possible_states = getStatesFromState(current_state);
 		//System.out.println(possible_states.length);
@@ -190,6 +190,8 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 		
 		//newQ += alpha * (HighestReward + (gamma * getMaxQ(nextState)) - newQ);
 		currentStateQ.put(current_state, newQ);
+		
+		//System.out.println(current_state);
 		
 		action = act;
 		//act[Mario.KEY_SPEED] = !act[Mario.KEY_SPEED];
@@ -262,10 +264,10 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 	//get all of the actions possible from the current state
 	public String[] getStatesFromState(String state)
 	{
-		
 		int x_movement_variations = 3;	// because determining the velocity is near impossible for our time frame
 		int y_movement_variations = 3;	// because EVEN IF mario is jumping, if he holds it down he can jump higher
-		String[] actions = new String[ x_movement_variations * y_movement_variations ];
+		int shooting_variations = 2;
+		String[] actions = new String[ x_movement_variations * y_movement_variations * shooting_variations ];
 		
 		String[] x_movements = new String[3];
 		x_movements[0] = "00";
@@ -277,19 +279,33 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 		y_movements[1] = "10";
 		y_movements[2] = "11";
 		
+		/*
+		String[] shoots = new String[2];
+		shoots[0] = "0";
+		shoots[1] = "1";
+		*/
+		
 		for(int i=0; i<x_movements.length;i++)
 		{
 			for(int j=0; j<y_movements.length;j++)
 			{
-				String combo = "";
-				combo+=x_movements[i]+y_movements[j];
-				
-				int dex = i*3 + j;
-				actions[dex] = state.substring(0,3);
-				actions[dex] += combo;
-				actions[dex] += state.substring(7,state.length());
+				for(int k=0; k<shooting_variations;k++){
+					int dex = (i*3 + j)*2 + k;
+					actions[dex] = state.substring(0,3);
+					actions[dex] += x_movements[i]+y_movements[j];
+					actions[dex] += state.substring(7,state.length()-2/*-2*/);
+					actions[dex] += Integer.toString(k)+"|";
+				}
 			}
 		}
+		
+		/*
+		System.out.println("RETURNING THE FOLLOWING STATES:");
+		for(int i=0; i<actions.length; i++)
+		{
+			System.out.printf("[%d]: %s\n",i, actions[i]);
+		}
+		*/
 		
 		return actions;
 	}
@@ -304,26 +320,20 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 	
 	public double getR(String state)
 	{
-		giveR(state);
-		/*
+		//giveR(state);
+		//System.out.println(state);
 		if(!R.contains(state))
 		{
-			R.put(state, 0.0);
+			R.put(state, initial_q_value);
 		}
-		*/
-		return R.get(state);
+		
+		return R.get(state) + getIntermediateR(state);
 	}
 	public void giveRCurrent()
 	{
 		if(!R.contains(current_state))
 		{
 			R.put(current_state, initial_q_value);
-		}
-		
-		if(current_state.charAt(23+9) == '1')
-		{
-			//System.out.println("rewarding damaged state");
-			R.put(current_state, R.get(current_state) + damage_reward);
 		}
 		
 		if(current_state.charAt(25+9) == '1')
@@ -347,9 +357,30 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 			//System.out.println("YOU CLOWN!");
 			R.put(current_state, R.get(current_state)+ death_reward);
 		}
+		else if(current_state.charAt(23+9) == '1')
+		{
+			//System.out.println("rewarding damaged state");
+			R.put(current_state, R.get(current_state) + damage_reward);
+		}
 	}
 	
 	//get the reward for a certain action
+	public double getIntermediateR(String state)
+	{
+		double r = initial_q_value;
+		if(state.charAt(4) == '1')
+		{
+			//System.out.println("rewarding right state");
+			r += right_reward;
+		}
+		if(state.charAt(6) == '1')
+		{
+			//System.out.println("rewarding up state");
+			r += up_reward;
+		}
+		return r;
+		
+	}
 	public void giveR(String state)
 	{
 		
@@ -357,12 +388,6 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 		{
 			R.put(state, initial_q_value);
 		}
-		else
-		{
-			//System.out.println("Already contained that state!");
-		}
-		//reward for going right
-		//System.out.println(state);
 		
 		if(state.charAt(4) == '1')
 		{
@@ -377,11 +402,14 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 		
 	}
 	
+	/*
 	public double getReward(String currentState, String nextState)
 	{
 		return 0;
 	}
+	*/
 	
+	/*
 	//return the action with the highest reward
 	public String getMaxR(String[] states)
 	{
@@ -389,6 +417,7 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 		double maxR = -Double.MAX_VALUE;
 		for(int i=0; i<states.length;i++)
 		{
+			System.out.println("Calling getR from getMaxR");
 			if(getR(states[i]) > maxR)
 			{
 				j = i;
@@ -397,8 +426,8 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 		}
 		return states[j];
 	}
-	
-	
+	*/
+		
 	public double getMaxQ(String state)
 	{
 		Hashtable<String, Double> options = Q.get(state);
@@ -430,20 +459,21 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 	
 	public String encodeMarioMode()
 	{
-		String msg = "";
 		switch(marioMode)
 		{
-			case 2: msg += "10";		// fire mario
-					break;
-			case 1: msg += "01";		// big mario
-					break;
-			default: msg += "00";		// small mario
-					break;
+			case 2: return "10";		// fire mario
+			case 1: return "01";		// big mario
+			default: return "00";		// small mario
 		}
-		return msg;
-		
 	}
-	
+	public String encodeIsMarioShooting()
+	{
+		if(isMarioAbleToShoot && action[Mario.KEY_SPEED])
+		{
+			return "1";
+		}
+		return "0";
+	}
 	public String encodeMarioStatus()
 	{
 		//Mario.STATUS_WIN
@@ -504,8 +534,8 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 	public String encodeMarioGround()
 	{
 		if(isMarioOnGround)
-			return("1");
-		return("0");
+			return "1";
+		return "0";
 	}
 	public String encodeMarioJump()
 	{
@@ -513,6 +543,17 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 			return("1");
 		return("0");
 	}
+	public String encodeMarioCanShoot()
+	{
+		if(isMarioAbleToShoot && marioMode == 2)
+		{
+			return "1";
+		}
+		return "0";
+	}
+	
+	
+	
 	public String encodeNearbyEnemies()
 	{
 		String msg = "";
@@ -600,9 +641,7 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 			{
 				msg += "0";
 			}
-			
-			
-			break;
+			return msg;
 		default: 	// "meat on them bones" Mario
 			
 			
@@ -685,13 +724,8 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 			{
 				msg += "0";
 			}
-			
-			
-			
-			break;
+			return msg;
 		}
-		//System.out.println("enemy encoding: " + msg);
-		return msg;
 	}
 	
 	public String encodeMidRangeEnemies()
@@ -852,12 +886,8 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 		//System.out.println("midrange enemy encoding: " + msg);
 		return msg;
 	}
-	
-	
 	public String encodeObstaclesInFront()
 	{
-		String msg = "0";
-		
 		int x = 9;
 		int y = 10;
 		if(marioMode == 0)
@@ -871,10 +901,9 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 		
 		if(coord10 != 0 || coord11 != 0 || coord12 != 0)
 		{
-			msg = "1";
+			return "1";
 		}
-		//System.out.println("returning "+msg);
-		return msg;
+		return "0";
 	}
 	public String encodeRanIntoEnemy()
 	{
@@ -906,24 +935,26 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 	}
 	
 	
-	//encode the action to get to state from prevState
+	//encode the action to get to state from current_state
 	public boolean [] encodeActionToState(String goalState)
 	{
 		boolean[] act = getEmptyAction();
 		
-		// should Mario shoot or nah
-		//if he is to shoot
-	/*	if(goalState.charAt(0) == '1' && goalState.charAt(1) == '1')
+		// should Mario shoot
+		//System.out.print(goalState.charAt(goalState.length()-3) + " ");
+		if(goalState.charAt(goalState.length()-2) == '1')
 		{	// if he is fire mario, always shoot
 			// this is consistent encoding from our hand agent that we developed originally
-			act[Mario.KEY_SPEED] = !act[Mario.KEY_SPEED];
+			//System.out.println(goalState);
+			act[Mario.KEY_SPEED] = true;
+			//System.out.println("Pew");
 		}
 		else
 		{
+			//System.out.println("He actually turned it off");
 			act[Mario.KEY_SPEED] = false;
 		}
 		
-		*/
 		// --- this is not truly the direction of mario's velocity ---
 		if(goalState.charAt(3)== '1')
 		{
@@ -965,8 +996,6 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 			act[Mario.KEY_DOWN] = false;
 		}
 		
-		
-		
 		return act;
 	}	
 	
@@ -974,19 +1003,19 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 	@Override
 	public void learn() {
 		// TODO Auto-generated method stub
-		progress = 1;
+		progress = 0;
 		for(int i=1; i<numEpisodes;i++)
 		{
 			
 			// turn on visualization
-			if(i%120 == 0) {
+			if(i%60 == 1 && i!=1) {
 				task.setVisualization(true);
 			} else {
 				task.setVisualization(false);
 			}
 			
 			// change mario mode every 20
-			if(i%20 == 0) {
+			if(i%training_episodes == 0) {
 				switch(progress){
 				case 1:
 					progress = 2; break;
@@ -996,17 +1025,23 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 					progress = 1; break;
 				}
 			}
+			int prog = progress;
+			if(i%200 == 0)
+			{
+				epsilon/=2;
+			}
 			
 			// actually run the simulation
 			task.evaluate(this);
 			
-			if(i%20 != 0)
+			
+			if(i%training_episodes != training_episodes-1)
 			{
-				System.out.printf("%d:\t%f\t--QTable size: %d\n", i, task.getEnvironment().getFitness(), Q.size());
+				System.out.printf("%d (%d):\t%f\t--QTable size: %d\n", i, prog, task.getEnvironment().getFitness(), Q.size());
 			}
 			else
 			{
-				System.out.printf("marioMode(%d) - [%d] final training - \t%f\n", progress-1, i, task.getEnvironment().getFitness());
+				System.out.printf("marioMode(%d) - [%d] final training - \t%f\n", prog, i, task.getEnvironment().getFitness());
 				
 			}
 			running = false;
@@ -1062,7 +1097,7 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 	@Override
 	public void setNumberOfTrials(int num) {
 		// TODO Auto-generated method stub
-		this.num_episodes = num;
+		this.numEpisodes = num;
 		
 	}
 

@@ -345,4 +345,13 @@ public Float getFitness() {
 	// TODO Auto-generated method stub
 	return this.getEvaluationInfo().getFitness();
 }
+/*
+@Override
+public String getMemo() {
+	// TODO Auto-generated method stub
+	String death = "";
+	death = this.getEvaluationInfo().Memo;
+	this.getEvaluationInfo().Memo = "";
+	return death;
+}*/
 }

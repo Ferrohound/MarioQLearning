@@ -138,6 +138,7 @@ void setAgent(Agent agent);
 
 public float getIntermediateReward();
 
+//public String getMemo();
 /**
  * @return pos[0] = ReceptiveFieldWidth/2
  *         pos[1] = ReceptiveFieldHeight/2
