@@ -26,6 +26,7 @@ private int fitnessEvaluations = 0;
 public int uid;
 private String fileTimeStamp = "-uid-" + uid + "-" + GlobalOptions.getTimeStamp();
 
+//switch between Q-Learning and SARSA
 public Sarsa agent;
 //public QLearning agent;
 
@@ -36,9 +37,9 @@ public ProgressTask(CmdLineOptions evaluationOptions)
     super(evaluationOptions);
     setOptions(evaluationOptions);
     
-    
+	// switch between Q-Learning and SARSA
     agent = new Sarsa("OurBoySarsaDog");
-    // agent = new QLearning("OurBoyQLearns"); switch between Q-Learning and SARSA
+    //agent = new QLearning("OurBoyQLearns");
 
     agent.setTask(this);
     agent.init();

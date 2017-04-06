@@ -35,12 +35,11 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 	int prevEnemiesFireballed =  0;
 	
 
-	final double right_reward = 0.1;
-	final double up_reward = 0.0;
-	final double damage_reward = -100.0;
-	final double fire_reward = 10.0;
-	final double shoot_reward = 0.1;
-	final double stomp_reward = 5.0;
+	final double right_reward = 0.0001;//1;
+	final double up_reward = 0.0001;
+	final double damage_reward = -400.0;
+	final double fire_reward = 40.0;
+	final double stomp_reward = 80.0;
 	final double win_reward = 1000.0;
 	final double death_reward = -500.0;
 	
@@ -122,7 +121,7 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 	}
 	public boolean probe(int x, int y)
 	{
-		return getEnemyFieldCellValue(x,y) != 0;
+		return getEnemyFieldCellValue(-y,x) != 0;
 	}
 	public boolean[] getExplorationAction()
 	{
@@ -139,7 +138,7 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 	}
 	public boolean[] getBestAction()
 	{
-		System.out.println("MarioReinforcementLearning getBestAction()");
+		//System.out.println("MarioReinforcementLearning getBestAction()");
 		giveRCurrent();
 		// TO DO: Make it actually choose its best action from the Q table
 		//get the list of actions
@@ -181,16 +180,15 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 		
 		double Q_val;
 		
-		if(!currentStateQ.containsKey(nextState))
+		if( currentStateQ.get(nextState) == null)
 			Q_val = initial_q_value;
 		else
 			Q_val = currentStateQ.get(nextState);
 		
 		//calculate the new Q value
-		// Q(s,a) = newQ
 		Q_val += updateFormula(nextState, HighestReward, Q_val, calculateAlpha(nextState, act));
+		//Q_val += updateFormula(nextState, HighestReward, Q_val, alpha0);
 		
-		//newQ += alpha * (HighestReward + (gamma * getMaxQ(nextState)) - newQ);
 		currentStateQ.put(current_state, Q_val);
 		
 		//System.out.println(current_state);
@@ -212,10 +210,10 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 	{
 		String act_str = getActionString(act);
 		// if the state is uniquequequequequeque
-		if(AlphaHash.contains(state))
+		if(AlphaHash.get(state) != null)
 		{
 			Hashtable<String,Integer> alphas = AlphaHash.get(state);
-			if(alphas.contains(act_str))
+			if(alphas.get(act_str) != null)
 			{
 				// get the number of times the action has been taken
 				int repeats = alphas.get(act_str); // increase the counter for the times the action has been taken
@@ -324,7 +322,7 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 	{
 		//giveR(state);
 		//System.out.println(state);
-		if(!R.contains(state))
+		if(R.get(state) == null)
 		{
 			R.put(state, initial_q_value);
 		}
@@ -333,7 +331,7 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 	}
 	public void giveRCurrent()
 	{
-		if(!R.contains(current_state))
+		if(R.get(current_state) == null)
 		{
 			R.put(current_state, initial_q_value);
 		}
@@ -372,13 +370,43 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 		double r = initial_q_value;
 		if(state.charAt(4) == '1')
 		{
-			//System.out.println("rewarding right state");
-			r += right_reward;
+			// if enemy nearby directly in front, or in front and up
+			if(state.charAt(13) == '1' || state.charAt(14) == '1')
+			{
+				//System.out.println(state);
+				//System.out.println("QUARTER of the RIGHT reward!");
+				r -= right_reward/2f;
+			}
+			else if(state.charAt(24) == '1')
+			{
+				//System.out.println(state);
+				//System.out.println("HALF of the RIGHT reward!");
+				r -= right_reward/4f;
+			}
+			else
+			{
+				r += right_reward;				
+			}
 		}
 		if(state.charAt(6) == '1')
 		{
 			//System.out.println("rewarding up state");
-			r += up_reward;
+			if(state.charAt(12) == '1' || state.charAt(13) == '1')
+			{
+				//System.out.println(state);
+				//System.out.println("QUARTER of the UP reward!");
+				r -= up_reward/2f;
+			}
+			else if(state.charAt(21) == '1' || state.charAt(22) == '1')
+			{
+				//System.out.println(state);
+				//System.out.println("HALF of the UP reward!");
+				r -= up_reward/4f;
+			}
+			else
+			{
+				r += up_reward;				
+			}
 		}
 		return r;
 		
@@ -386,7 +414,7 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 	public void giveR(String state)
 	{
 		
-		if(!R.contains(state))
+		if( R.get(state) == null)
 		{
 			R.put(state, initial_q_value);
 		}
@@ -577,6 +605,7 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 			// 0,1
 			if(probe(0,1))
 			{
+				//System.out.println("--- Enemy directly above ---");
 				msg += "1";
 			}
 			else
@@ -597,6 +626,7 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 			// 1,0
 			if(probe(1,0))
 			{
+				//System.out.println("--- Enemy directly in front ---");
 				msg += "1";
 			}
 			else
@@ -617,6 +647,7 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 			// 0,-1
 			if(probe(0,-1))
 			{
+				//System.out.println("--- Enemy directly below ---");
 				msg += "1";
 			}
 			else
@@ -749,6 +780,7 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 			// top middle grouping
 			if(probe(0,2))
 			{
+				//System.out.println("Midrange enemy directly above");
 				msg += "1";
 			}
 			else
@@ -758,6 +790,7 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 			// top right grouping
 			if(probe(1,2) || probe(2,2) || probe(2,1))
 			{
+				//System.out.println("Midrange enemy up and right");
 				msg += "1";
 			}
 			else
@@ -767,6 +800,7 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 			// front grouping
 			if(probe(2,0))
 			{
+				//System.out.println("Midrange enemy directly in front!");
 				msg += "1";
 			}
 			else
@@ -776,6 +810,7 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 			// bottom rightt grouping
 			if(probe(2,-1) || probe(2,-2) || probe(1,-2))
 			{
+				//System.out.println("Midrange enemy bottom right!");
 				msg += "1";
 			}
 			else
@@ -785,6 +820,7 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 			// bottom middle grouping
 			if(probe(0,-2))
 			{
+				//System.out.println("Midrange enemy IS BELOW ME");
 				msg += "1";
 			}
 			else
@@ -794,6 +830,7 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 			// bottom left grouping
 			if(probe(-1,-2) || probe(-2,-2) || probe(-2,-1))
 			{
+				//System.out.println("Midrange enemy in bottom left");
 				msg += "1";
 			}
 			else
@@ -803,6 +840,7 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 			// back grouping
 			if(probe(-2,0))
 			{
+				//System.out.println("Midrange enemy directly back");
 				msg += "1";
 			}
 			else
@@ -1010,11 +1048,12 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 		{
 			
 			// turn on visualization
-			if(i%60 == 1 && i!=1) {
+			if(i%60 == 61 && i!=1) {
 				task.setVisualization(true);
 			} else {
 				task.setVisualization(false);
 			}
+			
 			
 			// change mario mode every 20
 			if(i%training_episodes == 0) {
@@ -1028,10 +1067,13 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 				}
 			}
 			int prog = progress;
-			if(i%200 == 0)
+			
+			/*
+			if(i%500 == 0)
 			{
 				epsilon/=2;
 			}
+			*/
 			
 			// actually run the simulation
 			task.evaluate(this);
@@ -1051,12 +1093,14 @@ public class MarioReinforcementLearning extends BasicMarioAIAgent implements Lea
 		}
 		System.out.println("Training Complete!");
 		
-		progress = 3;
+		progress = 2;
 		task.setVisualization(true);
 		task.evaluate(this);
-		System.out.printf("%f\t%d\n", task.getEnvironment().getFitness(), numEpisodes);
+		System.out.printf("%d (%d):\t%f\t--QTable size: %d\n", numEpisodes, progress, task.getEnvironment().getFitness(), Q.size());
+		
+		//System.out.printf("%f\t%d\n", task.getEnvironment().getFitness(), numEpisodes);
 		task.setVisualization(false);
-		System.out.printf("Size of the QTable: %d", Q.size());
+		//System.out.printf("Size of the QTable: %d", Q.size());
 	}
 	
 	protected void setFireMode()

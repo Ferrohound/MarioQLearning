@@ -64,6 +64,7 @@ public class Sarsa extends MarioReinforcementLearning implements LearningAgent {
 	//reward previous state instead of the current one
 	public boolean[] getBestAction()
 	{
+		
 		//System.out.println("Calling getBestAction for SARSA");
 		giveRCurrent();
 		
@@ -107,7 +108,7 @@ public class Sarsa extends MarioReinforcementLearning implements LearningAgent {
 			prevStateQ = Q.get(previous_state);
 		}
 		// if it's the first time going to the current state from the previous state, initialize it
-		if(!prevStateQ.containsKey(current_state))
+		if(prevStateQ.get(current_state) == null)
 		{
 			prevStateQ.put(current_state, initial_q_value);
 		}
@@ -122,7 +123,7 @@ public class Sarsa extends MarioReinforcementLearning implements LearningAgent {
 			Q.put(current_state, new Hashtable<String, Double>());
 			currentStateQ = Q.get(current_state);
 		}
-		if (!currentStateQ.containsKey(nextState))
+		if (currentStateQ.get(nextState) == null)
 		{
 			currentStateQ.put(nextState, initial_q_value);
 		}
@@ -137,6 +138,7 @@ public class Sarsa extends MarioReinforcementLearning implements LearningAgent {
 		//calculate the new Q value
 		double R_current = initial_q_value;
 		Q_previous_to_current += updateFormula(R_current, Q_current_to_next, Q_previous_to_current, calculateAlpha(previous_state, action));
+		//Q_previous_to_current += updateFormula(R_current, Q_current_to_next, Q_previous_to_current, alpha0);
 		
 		//newQ += alpha * (HighestReward + (gamma * getMaxQ(nextState)) - newQ);
 		prevStateQ.put(current_state, Q_previous_to_current);
